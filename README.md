@@ -44,12 +44,9 @@ Unlike random K-Fold cross-validation (which violates chronological integrity in
 ```
 rbob-oil-price-prediction/
 ├── data/
-│   └── oil_prices.csv              # Historical commodity & energy prices
-├── docs/
-│   ├── case_study.pdf              # In-depth technical report
-│   └── presentation.pptx           # Slide deck & methodology summary
+│   └── oil_prices.csv              # Historical commodity & energy prices (2015–2017)
 ├── notebooks/
-│   └── rbob_price_prediction.ipynb # Complete EDA, feature engineering & model comparison
+│   └── rbob_price_prediction.ipynb # EDA, feature engineering & model comparison
 ├── src/
 │   ├── app.py                      # Interactive Streamlit dashboard
 │   └── predictor.py                # Core forecasting engine & data pipeline
