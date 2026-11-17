@@ -1,89 +1,85 @@
-# RBOB Gasoline Price Forecasting & Time Series Analysis
+﻿# RBOB Gasoline Price Prediction
 
-[![Python](https://img.shields.io/badge/Python-3.10%20%7C%203.11-blue?logo=python)](https://www.python.org/)
-[![scikit-learn](https://img.shields.io/badge/scikit--learn-1.3+-orange?logo=scikit-learn)](https://scikit-learn.org/)
-[![Streamlit](https://img.shields.io/badge/Streamlit-App-FF4B4B?logo=streamlit)](https://streamlit.io/)
-[![Ridge Accuracy](https://img.shields.io/badge/Model%20Accuracy-96.78%25-brightgreen)](#-model-evaluation--results)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python](https://img.shields.io/badge/Python-3.10%20%7C%203.11-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![scikit-learn](https://img.shields.io/badge/scikit--learn-1.3+-F7931E?logo=scikit-learn&logoColor=white)](https://scikit-learn.org/)
+[![Streamlit](https://img.shields.io/badge/Streamlit-1.32+-FF4B4B?logo=streamlit&logoColor=white)](https://streamlit.io/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-> **Machine Learning Time Series Pipeline and Interactive Forecasting Dashboard for RBOB Gasoline Prices.**  
-> Developed as an advanced quantitative modeling project at ENSIT (National Higher Engineering School of Tunis). Evaluates Ridge Regression, Random Forest, and Gradient Boosting under realistic walk-forward validation.
+> **Key Finding**: Ridge beats the persistence baseline on average over 5 walk-forward folds (MAE $0.069 vs $0.0848, about 18.6%, 4 of 5 folds) but does NOT beat it on the final holdout of the dashboard pipeline (Ridge 0.0684 vs baseline 0.0562), so the edge is not robust. Tree models underperform.
 
----
+Time-series forecasting pipeline and interactive Streamlit application predicting next-day RBOB gasoline spot prices using daily energy commodity data (2015-01-02 to 2024-12-31, 2,569 rows).
 
-## 📌 Project Overview
+## Key Modeling Findings
 
-Gasoline prices (RBOB) exhibit complex volatility driven by crude supply dynamics, refinery cracks, macroeconomic shifts, and seasonality. Traditional point predictions often suffer from lookahead bias and overfitting.
+Models are evaluated via 5-fold walk-forward cross-validation (`TimeSeriesSplit`), predicting next-day price ($t+1$) strictly from past and same-day features ($t$ and earlier) to avoid lookahead leakage.
 
-This project implements a statistically rigorous **walk-forward validation framework** evaluating multivariate commodity dependencies across energy assets (WTI Crude, Brent, Heating Oil, Natural Gas) and financial indicators to forecast RBOB prices.
+1. **Walk-Forward Generalization**:
+   - In the benchmark notebook setup, Ridge Regression achieves a mean MAE of $0.0690/gal ($R^2 = 0.925$), outperforming the persistence baseline in 4 of 5 folds.
+   - Non-linear tree ensembles (Random Forest and Gradient Boosting) fail to outperform the baseline across folds. In Fold 4 (2021-2023 energy price volatility), Random Forest MAE degrades to $0.59-$0.63/gal because decision trees cannot extrapolate trends beyond the price ranges observed in training data.
+2. **Holdout Evaluation**:
+   - On the final holdout split in `src/predictor.py`, the persistence baseline achieves MAE $0.0562, while Ridge achieves MAE $0.0684. The marginal gain observed in walk-forward cross-validation does not persist on every market regime, indicating that day-ahead commodity price predictability is weak and non-stationary.
 
-### 🌟 Key Highlights
-- **Rigorous Validation**: Walk-forward expanding-window time splits preserving temporal causality (zero lookahead bias).
-- **Multi-Model Comparison**: Evaluates L2-regularized Ridge Regression, Random Forest Regressors, and Gradient Boosting Machines against a naive persistence baseline.
-- **Top Performer**: **Ridge Regression achieved 96.78% prediction accuracy**, outperforming the baseline by **18.6%**, with lower variance and greater stability across regime shifts.
-- **Interactive Streamlit GUI**: Full-featured analytics dashboard with Plotly interactive time-series plots, rolling volatility indicators, and simulated scenario testing.
+## Benchmark Results
 
----
+### Notebook 5-Fold Walk-Forward Evaluation
 
-## 📊 Model Evaluation & Results
+| Model | Mean MAE ($/gal) | MAE Std | RMSE | $R^2$ | vs. Baseline |
+|---|---|---|---|---|---|
+| **Ridge Regression** | $0.0690 | 0.0178 | 0.1017 | 0.9246 | **+18.62%** |
+| **Persistence Baseline** | $0.0848 | 0.0279 | 0.1269 | 0.8969 | Reference |
+| **Gradient Boosting** | $0.1673 | 0.1472 | 0.2372 | 0.6789 | -97.25% |
+| **Random Forest** | $0.2372 | 0.1967 | 0.3133 | 0.3591 | -179.76% |
 
-| Model | MAE ($/gal) | RMSE ($/gal) | Directional Accuracy | Outperformance vs. Baseline |
-|---|---|---|---|---|
-| **Naive Persistence Baseline** | $0.0412 | $0.0583 | 51.4% | — |
-| **Random Forest** | $0.0385 | $0.0519 | 63.8% | +8.2% |
-| **Gradient Boosting** | $0.0361 | $0.0494 | 67.2% | +12.4% |
-| **Ridge Regression (L2)** 🏆 | **$0.0298** | **$0.0417** | **96.78%** | **+18.6%** |
+### Standalone Pipeline Evaluation (`src/predictor.py`)
 
-### 📈 Walk-Forward Validation
-Unlike random K-Fold cross-validation (which violates chronological integrity in time series), models were tested with sequential expanding windows to mirror real trading and supply chain environments.
+Using the unified `GasolinePredictor` module on 35 engineered features across 2,562 cleaned rows:
+- **Baseline (Persistence)**: MAE $0.0562, RMSE 0.0886, $R^2 = 0.9480$
+- **Ridge Regression**: MAE $0.0684, RMSE 0.1005, $R^2 = 0.9256$
+- **Gradient Boosting**: MAE $0.1312, RMSE 0.2049, $R^2 = 0.7476$
+- **Random Forest**: MAE $0.2085, RMSE 0.2842, $R^2 = 0.4791$
 
----
+## Streamlit Application Architecture
 
-## 🏗️ Repository Structure
+The interactive dashboard (`src/app.py`) provides 5 dedicated views:
+1. **Dashboard**: High-level overview of RBOB price trends, summary metrics, and rolling averages.
+2. **Data Explorer**: Interactive tables and distribution plots across all 16 tracked energy series.
+3. **Statistical Analysis**: Cross-asset correlation matrix, refining margins (crack spreads), and seasonal distributions.
+4. **Predictions**: Next-day forecasts, model comparison cards, and actual vs. predicted time-series overlays.
+5. **Model Analysis**: Walk-forward cross-validation diagnostics and top feature importance rankings.
+
+## Repository Structure
 
 ```
 rbob-oil-price-prediction/
-├── data/
-│   └── oil_prices.csv              # Historical commodity & energy prices (2015–2017)
-├── notebooks/
-│   └── rbob_price_prediction.ipynb # EDA, feature engineering & model comparison
-├── src/
-│   ├── app.py                      # Interactive Streamlit dashboard
-│   └── predictor.py                # Core forecasting engine & data pipeline
 ├── .gitignore
+├── LICENSE
+├── README.md
 ├── requirements.txt
-└── README.md
+├── data/
+│   └── oil_prices.csv
+├── notebooks/
+│   └── rbob_price_prediction.ipynb
+└── src/
+    ├── app.py
+    └── predictor.py
 ```
 
----
+## Getting Started
 
-## 🚀 Quick Start Guide
-
-### 1. Installation
 ```bash
-git clone https://github.com/IsraElAmri/rbob-oil-price-prediction.git
-cd rbob-oil-price-prediction
 pip install -r requirements.txt
-```
 
-### 2. Launching the Interactive Dashboard
-```bash
+# Run the interactive Streamlit dashboard
 streamlit run src/app.py
-```
-This opens the browser dashboard with:
-- Historical commodity correlation heatmaps
-- Out-of-sample forecast comparisons
-- Interactive slider controls to simulate crude oil price shocks on RBOB gasoline
 
-### 3. Running the Jupyter Notebook
-```bash
-jupyter lab notebooks/rbob_price_prediction.ipynb
+# Or run the prediction engine directly
+python -c "from src.predictor import GasolinePredictor; p = GasolinePredictor(); p.train_models()"
 ```
 
----
+## Dashboard Preview
 
-## 👩‍💻 Author
-**Isra El Amri**  
-Mathematical Engineering & Modeling Student at ENSIT  
-AI & Machine Learning Enthusiast  
-Contact: [elamriisra3@gmail.com](mailto:elamriisra3@gmail.com)
+![Dashboard](assets/dashboard.png)
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
