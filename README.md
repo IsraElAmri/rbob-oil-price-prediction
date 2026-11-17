@@ -15,7 +15,7 @@ Models are evaluated via 5-fold walk-forward cross-validation (`TimeSeriesSplit`
 
 1. **Walk-Forward Generalization**:
    - In the benchmark notebook setup, Ridge Regression achieves a mean MAE of $0.0690/gal ($R^2 = 0.925$), outperforming the persistence baseline in 4 of 5 folds.
-   - Non-linear tree ensembles (Random Forest and Gradient Boosting) fail to outperform the baseline across folds. In Fold 4 (2021-2023 energy price volatility), Random Forest MAE degrades to $0.59-$0.63/gal because decision trees cannot extrapolate trends beyond the price ranges observed in training data.
+   - Non-linear tree ensembles (Random Forest and Gradient Boosting) underperform the baseline in most folds (Random Forest in all 5, Gradient Boosting in 4 of 5). In Fold 4 (2021-2023 energy price volatility), Random Forest MAE degrades to $0.59-$0.63/gal because decision trees cannot extrapolate trends beyond the price ranges observed in training data.
 2. **Holdout Evaluation**:
    - On the final holdout split in `src/predictor.py`, the persistence baseline achieves MAE $0.0562, while Ridge achieves MAE $0.0684. The marginal gain observed in walk-forward cross-validation does not persist on every market regime, indicating that day-ahead commodity price predictability is weak and non-stationary.
 
