@@ -66,12 +66,27 @@ st.markdown("""
     .stMarkdown {
         color: #e0e0e0;
     }
+    section[data-testid="stSidebar"], [data-testid="stSidebar"] > div:first-child {
+        background: linear-gradient(180deg, #16213e 0%, #0f172a 100%) !important;
+    }
+    section[data-testid="stSidebar"] h1, section[data-testid="stSidebar"] h2, section[data-testid="stSidebar"] h3 {
+        color: #64ffda !important;
+    }
+    section[data-testid="stSidebar"] p, section[data-testid="stSidebar"] span, section[data-testid="stSidebar"] label {
+        color: #c5c6c7 !important;
+    }
     </style>
 """, unsafe_allow_html=True)
 
 # Initialize session state
-if 'predictor' not in st.session_state:
-    st.session_state.predictor = None
+if 'predictor' not in st.session_state or st.session_state.predictor is None:
+    try:
+        _auto_pred = GasolinePredictor()
+        _auto_pred.load_data()
+        _auto_pred.clean_data()
+        st.session_state.predictor = _auto_pred
+    except Exception:
+        st.session_state.predictor = None
 if 'trained' not in st.session_state:
     st.session_state.trained = False
 
